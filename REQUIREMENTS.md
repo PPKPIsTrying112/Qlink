@@ -70,49 +70,79 @@ Enforced via GKE ingress with TLS termination.
 
 **Authentication Method**
 
-QLink is a social app where people meet strangers. Trust and identity matter. Google SSO adds a layer of credibility — it's harder to make 10 fake Google accounts than 10 fake email accounts. So for a safety-conscious hangout app, Google SSO actually makes the platform more trustworthy
+QLink is built around meeting strangers in real cities. That 
+means we had to be serious about who is actually behind each 
+hangout post and join request — you cannot just let anyone 
+in and hope for the best.
 
-We chose Firebase Auth because it handles both SSO (Google Sign-In) and JWT simultaneously. After a user logs in, Firebase automatically issues a JWT token that our Express server verifies on every request. This means one library satisfies two requirements from the spec.
+We chose Firebase Auth because it gave us both Google SSO 
+and JWT token verification in one library without having to 
+build any of it ourselves. When someone logs into QLink, 
+Firebase issues them a token. Every time they do anything — 
+create a hangout, send a request, check their notifications 
+— that token travels with the request to our server, which 
+checks it is real before doing anything else.
 
-**Building Auth First**
-We built authentication first because every feature in QLink depends on knowing who the user is. Getting notifications, creating hangouts, sending join requests — all of it changes based on who is logged in. Finishing auth first meant everything we built after it already knew who the user was, without having to rewrite anything.
+We specifically wanted Google SSO because it raises the bar 
+for fake accounts. Creating ten fake Gmail accounts is 
+meaningfully harder than creating ten fake email addresses. 
+For an app where people are physically meeting up, that 
+extra layer of credibility matters.
 
-The login page offers both email/password and Google SSO. We used React Context with Firebase's onAuthStateChanged so every page in the app always knows who is logged in without passing user data through multiple components.
+We built auth before any other QLink feature because 
+everything depends on it. You cannot show someone their 
+own hangouts without knowing who they are. You cannot 
+notify the right person when their request gets approved 
+without knowing who sent it. Getting auth right first 
+meant we never had to go back and rewire anything.
 
-We tested registration end to end — a new user account was created in Firebase Auth and the app automatically redirected to the feed page. This confirmed that Firebase Auth is correctly integrated and the JWT token flow is working.
-
-The Express server uses Firebase Admin SDK to verify every incoming request. Before any QLink route runs — whether fetching hangouts or approving a join request — the auth middleware checks the user's JWT token. This ensures only authenticated QLink users can interact with the app. We chose this approach because Firebase Admin SDK handles token verification securely without us having to write custom JWT validation logic.
-
-We separated Firebase initialization from auth enforcement deliberately. firebase.ts gives the server credentials to talk to Firebase. auth.ts middleware uses those credentials to verify every incoming QLink request before any route runs. Before a user can create a hangout, send a join request, or see the feed — their Firebase JWT token is checked first. If it's missing or tampered with, the request is rejected immediately without touching any QLink data
+On the server side we kept Firebase setup and auth 
+checking deliberately separate. One file gives the server 
+its Firebase credentials. Another file — the middleware — 
+uses those credentials to check every incoming request. 
+If someone sends a request without a valid token, or tries 
+to tamper with one, they get a 401 back before we touch 
+a single piece of QLink data. We liked this separation 
+because if we ever needed to change how we verify tokens, 
+we only touch one file.
 
 **Password Hashing**
- Firebase Auth satisfies the password hashing requirement 
-by proxy — Firebase handles bcrypt internally.
+Firebase Auth handles password hashing internally using 
+industry standard methods. We did not implement our own 
+hashing — we trusted Firebase to do it correctly so we 
+could focus on building QLink.
 
 **Route Protection**
-Unauthenticated users are redirected to the login page via a 
-ProtectedRoute component that checks auth state before 
-rendering any protected page.
+Every QLink page that requires being logged in is wrapped 
+in a ProtectedRoute component. If someone tries to access 
+the feed or a hangout detail without being authenticated, 
+they get redirected to the login page immediately.
 
 **XSS Mitigation**
-Helmet.js sets Content Security Policy headers on every 
-Express response.
+We use Helmet.js on the Express server which sets the 
+right security headers automatically on every response. 
+This protects QLink users from malicious scripts being 
+injected through the app.
 
 **CSRF Mitigation**
-CORS is locked to the frontend domain only via the CLIENT_URL 
-environment variable. SameSite cookie policy is enforced.
+CORS on our server is locked to the QLink frontend domain 
+only. Requests coming from anywhere else get blocked. We 
+also enforce SameSite cookie policy so cookies cannot be 
+sent from external sites pretending to be QLink.
 
 **Injection Mitigation**
-All database interactions go through the Firestore SDK which 
-uses parameterized queries by design — no raw queries are 
-written anywhere.
+Every database interaction in QLink goes through the 
+Firestore SDK. We never write raw queries — the SDK 
+handles parameterized queries automatically, which means 
+there is no path for injection attacks through our data 
+layer.
 
 **Secrets Management**
-No API keys or secrets are hardcoded anywhere in the codebase. 
-All secrets are stored in .env files locally and GKE Secrets 
-in production.
-
----
+No API keys, Firebase credentials, or Gemini keys are 
+hardcoded anywhere in the QLink codebase. Locally they 
+live in .env files that are gitignored. In production 
+they live in GKE Secrets. Anyone who clones the repo 
+gets no credentials.
 
 ## Backend and Persistent Data
 
