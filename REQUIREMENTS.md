@@ -69,17 +69,19 @@ Enforced via GKE ingress with TLS termination.
 ## Authentication and Security
 
 **Authentication Method**
-We use Firebase Authentication with email/password and Google 
-SSO. Firebase Auth satisfies the password hashing requirement 
-by proxy — Firebase handles bcrypt internally.
 
-We use React Context to manage authentication state globally, 
-giving every component access to the current user without prop 
-drilling. Firebase's onAuthStateChanged listener reactively 
-updates the app when a user logs in or out.
+QLink is a social app where people meet strangers. Trust and identity matter. Google SSO adds a layer of credibility — it's harder to make 10 fake Google accounts than 10 fake email accounts. So for a safety-conscious hangout app, Google SSO actually makes the platform more trustworthy
+
+We chose Firebase Auth because it handles both SSO (Google Sign-In) and JWT simultaneously. After a user logs in, Firebase automatically issues a JWT token that our Express server verifies on every request. This means one library satisfies two requirements from the spec.
+
+**Building Auth First**
+We built authentication first because every feature in QLink depends on knowing who the user is. Getting notifications, creating hangouts, sending join requests — all of it changes based on who is logged in. Finishing auth first meant everything we built after it already knew who the user was, without having to rewrite anything.
+
+The login page offers both email/password and Google SSO. We used React Context with Firebase's onAuthStateChanged so every page in the app always knows who is logged in without passing user data through multiple components.
 
 **Password Hashing**
-Delegated to Firebase Authentication as permitted by the spec.
+ Firebase Auth satisfies the password hashing requirement 
+by proxy — Firebase handles bcrypt internally.
 
 **Route Protection**
 Unauthenticated users are redirected to the login page via a 
