@@ -79,6 +79,12 @@ We built authentication first because every feature in QLink depends on knowing 
 
 The login page offers both email/password and Google SSO. We used React Context with Firebase's onAuthStateChanged so every page in the app always knows who is logged in without passing user data through multiple components.
 
+We tested registration end to end — a new user account was created in Firebase Auth and the app automatically redirected to the feed page. This confirmed that Firebase Auth is correctly integrated and the JWT token flow is working.
+
+The Express server uses Firebase Admin SDK to verify every incoming request. Before any QLink route runs — whether fetching hangouts or approving a join request — the auth middleware checks the user's JWT token. This ensures only authenticated QLink users can interact with the app. We chose this approach because Firebase Admin SDK handles token verification securely without us having to write custom JWT validation logic.
+
+We separated Firebase initialization from auth enforcement deliberately. firebase.ts gives the server credentials to talk to Firebase. auth.ts middleware uses those credentials to verify every incoming QLink request before any route runs. Before a user can create a hangout, send a join request, or see the feed — their Firebase JWT token is checked first. If it's missing or tampered with, the request is rejected immediately without touching any QLink data
+
 **Password Hashing**
  Firebase Auth satisfies the password hashing requirement 
 by proxy — Firebase handles bcrypt internally.
