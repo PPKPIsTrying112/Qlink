@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import LoginPage from './components/auth/LoginPage'
 import RegisterPage from './components/auth/RegisterPage'
 import NavBar from './components/ui/NavBar'
+import FeedPage from './components/hangouts/FeedPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
@@ -26,7 +27,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/feed" element={
             <ProtectedRoute>
-              <div className="p-4 text-white">Feed coming soon</div>
+              <FeedPage />
             </ProtectedRoute>
           } />
           <Route path="/explore" element={

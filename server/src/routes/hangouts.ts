@@ -9,7 +9,6 @@ router.get('/', requireAuth, async (req: AuthRequest, res) => {
     const { lat, lng, vibe } = req.query
     const snapshot = await db.collection('hangouts')
       .where('status', '==', 'active')
-      .orderBy('createdAt', 'desc')
       .limit(20)
       .get()
 
@@ -33,6 +32,7 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res) => {
     }
     res.json({ id: doc.id, ...doc.data() })
   } catch (error) {
+    console.error('Hangouts error:', error)
     res.status(500).json({ error: 'Failed to fetch hangout' })
   }
 })
