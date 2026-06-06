@@ -209,3 +209,9 @@ The following parts of this project were assisted by AI:
 All AI-generated code was reviewed, understood, and modified 
 by the developer. The developer is responsible for all bugs 
 and architectural decisions.
+
+---
+
+## Responsive Design 
+
+QLink uses a bottom navigation bar on mobile because users are out in the city, often holding their phone with one hand. Bottom nav keeps all pages reachable with one thumb. On desktop, a left sidebar gives more space and fits how people naturally scan screens from left to right."
