@@ -51,6 +51,13 @@ hashing internally, supports Google SSO out of the box, and its
 Admin SDK makes server-side token verification straightforward 
 and reliable.
 
+Having Firebase Admin SDK initialized on the server does not 
+automatically make the server secure. It simply gives the server 
+the credentials to verify users. The auth middleware is what 
+actually enforces security on every incoming request — it is the 
+layer between having Firebase credentials and actually trusting 
+who is on the other end of a request.
+
 ## Request Flow
 
 A user taps "Create hangout" on QLink
@@ -62,6 +69,30 @@ A user taps "Create hangout" on QLink
 → Gemini moderates the content before it goes live
 → Response returns to the React frontend
 → The new hangout appears in nearby users feeds
+
+The server has three resource routes — /api/hangouts, /api/requests, and /api/users. Hangout routes handle creating and discovering hangouts. Request routes handle joining and approving. User routes handle profiles. All three follow the same pattern — auth middleware runs first, then the route handler talks to Firestore.
+
+## API Endpoints
+Hangout Routes /api/hangouts
+
+GET /api/hangouts — fetches all active hangouts near you, ordered by most recent. This is what powers QLink's feed
+GET /api/hangouts/:id — fetches one specific hangout's full details for the detail page
+POST /api/hangouts — creates a new hangout, automatically sets the host as the logged in user
+DELETE /api/hangouts/:id — cancels a hangout, but only if you are the host who created it
+
+
+Request Routes /api/requests
+
+POST /api/requests — sends a join request to a hangout. Checks first if you already requested so you cannot spam the same hangout
+PUT /api/requests/:id — updates a request status to approved or declined. Used by the host to respond to join requests
+
+
+User Routes /api/users
+
+GET /api/users/:uid — fetches any QLink user's profile by their uid
+PUT /api/users/:uid — updates your own profile. Blocked if you try to edit someone else's profile
+POST /api/users/me — creates your user document in Firestore the first time you register. Only runs if the document doesn't exist yet
+
 
 ## Notification Flow
 

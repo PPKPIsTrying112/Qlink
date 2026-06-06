@@ -159,6 +159,10 @@ profiles and hangout posts.
 Firestore SDK used for all database interactions, satisfying 
 the ODM requirement.
 
+**Routes**
+"We built three core route files — hangouts, requests, and users. Every single route is protected by auth middleware, meaning no QLink data can be read or written without a verified user. We checked for duplicate join requests on the server side so a user cannot spam request the same hangout twice. We also check ownership before allowing deletes — only the host who created a hangout can cancel it."
+
+
 ---
 
 ## AI Integration
