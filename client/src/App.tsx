@@ -4,6 +4,7 @@ import LoginPage from './components/auth/LoginPage'
 import RegisterPage from './components/auth/RegisterPage'
 import NavBar from './components/ui/NavBar'
 import FeedPage from './components/hangouts/FeedPage'
+import CreateHangout from './components/hangouts/CreateHangout'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
@@ -37,7 +38,7 @@ function App() {
           } />
           <Route path="/create" element={
             <ProtectedRoute>
-              <div className="p-4 text-white">Create coming soon</div>
+              <CreateHangout />
             </ProtectedRoute>
           } />
           <Route path="/notifications" element={
