@@ -125,6 +125,9 @@ This protects QLink users from malicious scripts being
 injected through the app.
 
 **CSRF Mitigation**
+
+We lock CORS to QLink's frontend domain using the CLIENT_URL environment variable to make sure no other website can make requests to QLink's server even if a user is logged in. The domain is stored in an environment variable so it automatically switches between localhost in development and the live GKE URL in production.
+
 CORS on our server is locked to the QLink frontend domain 
 only. Requests coming from anywhere else get blocked. We 
 also enforce SameSite cookie policy so cookies cannot be 
