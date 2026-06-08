@@ -27,6 +27,9 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
 
+      - name: Install GKE auth plugin
+        run: gcloud components install gke-gcloud-auth-plugin
+
       - name: Configure Docker for GCR
         run: gcloud auth configure-docker
 
@@ -44,9 +47,13 @@ jobs:
 
       - name: Get GKE credentials
         run: gcloud container clusters get-credentials $GKE_CLUSTER --zone $GKE_ZONE
+        env:
+          USE_GKE_GCLOUD_AUTH_PLUGIN: True
 
       - name: Update k8s manifests and deploy
         run: |
           sed -i "s|CLIENT_IMAGE|$CLIENT_IMAGE:$GITHUB_SHA|g" k8s/client-deployment.yml
           sed -i "s|SERVER_IMAGE|$SERVER_IMAGE:$GITHUB_SHA|g" k8s/server-deployment.yml
           kubectl apply -f k8s/
+        env:
+          USE_GKE_GCLOUD_AUTH_PLUGIN: True
