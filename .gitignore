@@ -2,3 +2,7 @@ node_modules/
 **/.env
 dist/
 .DS_Store
+key.json
+ARCHITECTURE.md
+REQUIREMENTS.md
+DATABASE.md

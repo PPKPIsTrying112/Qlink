@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qlink-client
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qlink-client
+  template:
+    metadata:
+      labels:
+        app: qlink-client
+    spec:
+      containers:
+      - name: qlink-client
+        image: CLIENT_IMAGE
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qlink-client-service
+spec:
+  selector:
+    app: qlink-client
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP

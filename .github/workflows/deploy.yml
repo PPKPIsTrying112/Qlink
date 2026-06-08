@@ -1,0 +1,52 @@
+name: Deploy to GKE
+
+on:
+  push:
+    branches: [main]
+
+env:
+  PROJECT_ID: qlink-498202
+  GKE_CLUSTER: qlink-cluster
+  GKE_ZONE: us-central1-a
+  CLIENT_IMAGE: gcr.io/qlink-498202/qlink-client
+  SERVER_IMAGE: gcr.io/qlink-498202/qlink-server
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Build client image
+        run: docker build -f client.Dockerfile -t $CLIENT_IMAGE:$GITHUB_SHA .
+
+      - name: Build server image
+        run: docker build -f server.Dockerfile -t $SERVER_IMAGE:$GITHUB_SHA .
+
+      - name: Push client image
+        run: docker push $CLIENT_IMAGE:$GITHUB_SHA
+
+      - name: Push server image
+        run: docker push $SERVER_IMAGE:$GITHUB_SHA
+
+      - name: Get GKE credentials
+        run: gcloud container clusters get-credentials $GKE_CLUSTER --zone $GKE_ZONE
+
+      - name: Update k8s manifests and deploy
+        run: |
+          sed -i "s|CLIENT_IMAGE|$CLIENT_IMAGE:$GITHUB_SHA|g" k8s/client-deployment.yml
+          sed -i "s|SERVER_IMAGE|$SERVER_IMAGE:$GITHUB_SHA|g" k8s/server-deployment.yml
+          kubectl apply -f k8s/
