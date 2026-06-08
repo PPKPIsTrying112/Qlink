@@ -12,8 +12,12 @@ import userRoutes from './routes/users'
 const app = express()
 const PORT = process.env.PORT || 3001
 
-// Health check BEFORE helmet so GCP load balancer can reach it
 app.get('/health', (req, res) => {
+  res.json({ status: 'ok', app: 'QLink' })
+})
+
+// Root route for GCP load balancer health check
+app.get('/', (req, res) => {
   res.json({ status: 'ok', app: 'QLink' })
 })
 
