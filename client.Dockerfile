@@ -1,4 +1,3 @@
-cat > ~/Desktop/ucla_144/team16/client.Dockerfile << 'EOF'
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY client/package*.json ./
