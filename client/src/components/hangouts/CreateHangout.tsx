@@ -25,6 +25,11 @@ export default function CreateHangout() {
   }
 
   const getLocation = () => {
+    setError('')
+    if (!navigator.geolocation || !window.isSecureContext) {
+      setError('Location pin needs HTTPS — type your location manually for now')
+      return
+    }
     setLocating(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
