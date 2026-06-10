@@ -46,12 +46,12 @@ export default function CreateHangout() {
     e.preventDefault()
     setLoading(true)
     try {
-      await api.post('/api/hangouts', form)
-      navigate('/feed')
-    } catch {
-      setError('Could not create hangout')
+        await api.post('/api/hangouts', form)
+        navigate('/feed')
+    } catch (err:any) {
+        setError(err.response?.data?.error || 'Could not create hangout')
     } finally {
-      setLoading(false)
+        setLoading(false)
     }
   }
 
