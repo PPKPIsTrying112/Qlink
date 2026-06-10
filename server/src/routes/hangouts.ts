@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { db } from '../services/firebase'
 import { requireAuth, AuthRequest } from '../middleware/auth'
+import { moderateHangout } from '../services/gemini'
 
 const router = Router()
 
@@ -40,6 +41,12 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res) => {
 router.post('/', requireAuth, async (req: AuthRequest, res) => {
   try {
     const { title, vibe, location, lat, lng, datetime, maxPeople, description } = req.body
+
+    const moderation = await moderateHangout(title, description || '')
+    if (!moderation.safe) {
+      res.status(400).json({ error: `Hangout rejected: ${moderation.reason}` })
+      return
+    }
 
     const hangout = {
       hostUid: req.user!.uid,
