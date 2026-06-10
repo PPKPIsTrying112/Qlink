@@ -9,9 +9,11 @@ We use semantic HTML5 elements throughout — `<nav>`, `<main>`,
 
 **HTML5 APIs (2 required)**
 - Geolocation API: Used in CreateHangout component to pin the 
-user's current location when creating a hangout post.
+Geolocation API is implemented in CreateHangout — when a user taps the Pin button, the browser requests their location and automatically attaches the coordinates to the hangout post. This means every hangout has real lat/lng data stored in Firestore for future distance filtering.
+
 - Drag and Drop API: Used in ProfilePage to allow users to 
 reorder their profile photos.
+
 
 **Responsive Design**
 The app is fully responsive at 320px (mobile), 768px (tablet), 
@@ -25,6 +27,8 @@ application. No other CSS approaches are mixed in.
 **Single Page Application**
 Built with React and React Router. Navigation never triggers 
 full page reloads. All routing is client-side.
+e.g.
+After creating a hangout, the app navigates to the feed without any page reload — the new hangout appears immediately in the list.
 
 **Frontend Framework**
 React with Vite and TypeScript.
@@ -162,6 +166,7 @@ the ODM requirement.
 **Routes**
 "We built three core route files — hangouts, requests, and users. Every single route is protected by auth middleware, meaning no QLink data can be read or written without a verified user. We checked for duplicate join requests on the server side so a user cannot spam request the same hangout twice. We also check ownership before allowing deletes — only the host who created a hangout can cancel it."
 
+We discovered that combining Firestore's where() and orderBy() on the same query requires a composite index. Rather than blocking feed functionality while waiting for the index to build, we removed the orderBy() temporarily and will add it back with the proper index configured in Firestore console.
 
 ---
 
@@ -212,6 +217,11 @@ and architectural decisions.
 
 ---
 
-## Responsive Design 
 
-QLink uses a bottom navigation bar on mobile because users are out in the city, often holding their phone with one hand. Bottom nav keeps all pages reachable with one thumb. On desktop, a left sidebar gives more space and fits how people naturally scan screens from left to right."
+## User Experience
+
+# Responsiveness
+QLink uses a bottom navigation bar on mobile because users are out in the city, often holding their phone with one hand. Bottom nav keeps all pages reachable with one thumb. On desktop, a left sidebar gives more space and fits how people naturally scan screens from left to right.
+
+# Error Handling
+The feed page shows an empty state with a prompt to create the first hangout when no hangouts exist nearby. This was a deliberate choice — a blank screen would confuse users, but a clear message like 'Be the first to create one' turns an empty state into an invitation."

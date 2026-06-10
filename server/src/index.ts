@@ -8,6 +8,7 @@ dotenv.config()
 import hangoutRoutes from './routes/hangouts'
 import requestRoutes from './routes/requests'
 import userRoutes from './routes/users'
+import notificationRoutes from './routes/notifications'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -15,6 +16,8 @@ const PORT = process.env.PORT || 3001
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', app: 'QLink' })
 })
+
+app.use('/api/notifications', notificationRoutes)
 
 // Root route for GCP load balancer health check
 app.get('/', (req, res) => {

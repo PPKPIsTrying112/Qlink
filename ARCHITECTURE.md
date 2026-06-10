@@ -72,6 +72,9 @@ A user taps "Create hangout" on QLink
 
 The server has three resource routes — /api/hangouts, /api/requests, and /api/users. Hangout routes handle creating and discovering hangouts. Request routes handle joining and approving. User routes handle profiles. All three follow the same pattern — auth middleware runs first, then the route handler talks to Firestore.
 
+All frontend requests go through client/src/services/api.ts which automatically attaches the user's Firebase JWT token so no component has to handle auth manually.
+
+
 ## API Endpoints
 Hangout Routes /api/hangouts
 
@@ -159,6 +162,23 @@ Push to GitHub main branch
 → If a pod crashes, Kubernetes recreates it automatically
 → Ingress routes HTTPS traffic to the correct running pods
 
+Why GKE + load balancer
+QLink is a real-time app — people post hangouts and others request to join while the host is online — so I couldn't let the whole thing depend on a single server. If that one server crashed mid-demo, the app would just be down. I deployed to GKE with 2 pod replicas per service behind a load balancer (136.110.169.18) so the app stays up even if a pod dies. Kubernetes detects the dead pod and recreates it automatically (self-healing), and I can add pods if traffic spikes (scaling) — both of which are demo requirements.
+Why e2-small over e2-micro
+I originally ran the cluster on e2-micro nodes (1GB RAM) to stay cheap, but the server pods kept dying. The TypeScript server runs through ts-node, and that runtime plus system overhead exceeded what 1GB could handle, so pods were getting killed under memory pressure. I migrated the workload to a new e2-small node pool and deleted the old one, which resolved it. 
+Why I bake env vars at build time (Vite)
+The frontend's Firebase config is injected when the Docker image is built, not at runtime — which is different from how the server handles secrets. This is because Vite compiles a static bundle: once it's built, there's no Node process to read process.env, so anything the frontend needs has to be baked in during npm run build. I pass the VITE_* values as Docker build args and write them to a .env file before building, so the live Firebase keys end up compiled into the final bundle.
+Why the health check route runs before Helmet
+The load balancer only sends traffic to pods it considers healthy, and it decides that by pinging a /health route on each pod. If that route doesn't return 200, GCP marks the entire backend UNHEALTHY and the API returns 502s — even when the server is actually running fine. I learned this the hard way when a stale health check pointed at the wrong path. I register /health before app.use(helmet()) so the security middleware can't interfere with or block the load balancer's check.
+Why the Firebase private key uses a Secret with --from-file
+The server authenticates to Firebase with a service-account private key, which I store in a Kubernetes Secret to keep it out of the image and the repo. The key is a PEM that depends on real newline characters, and when I first created the Secret with --from-literal, the newlines got mangled and Firebase Admin failed to initialize (DECODER routines::unsupported). I switched to --from-file, which preserves the formatting exactly, and the app reads the key from an env var at runtime.
+
+
+# Docker
+We use two separate Docker containers — one for the React client, one for the Express server. This separation means we can scale them independently on GKE. If QLink gets a lot of traffic hitting the API, we can add more server pods without touching the client. If we need to update the frontend without changing the backend, we deploy only the client image. Each container is self-contained with everything it needs to run — no dependency on the host machine
+
+Both Dockerfiles follow layer caching best practices — package.json is copied and dependencies installed before the source code is copied.
+
 ## Why GKE
 
 QLink needs to stay online even if something goes wrong. 
@@ -167,3 +187,14 @@ keeps serving users without any downtime. Kubernetes detects
 the failure and spins up a replacement automatically. For an 
 app where people are actively coordinating meetups in real 
 time, that reliability matters.
+
+## Real-Time Notifications (SSE)
+Real-Time Notifications (SSE)
+QLink's core loop depends on immediacy: a host posts a hangout, a guest requests to join, and the host needs to know now — not on their next refresh. The moment a request sits unseen, the app fails at the one thing it's for. So real-time delivery wasn't a nice-to-have; it shaped the notification architecture.
+I chose Server-Sent Events over WebSockets because QLink's notification traffic is strictly one-directional. The server pushes events to the client — "someone requested to join," "your request was approved" — and the client never needs to push anything back down that same channel; user actions already go through the normal REST endpoints. A WebSocket's bidirectional channel would be capability the app never exercises, so SSE matches the actual data flow while staying lighter to run and reason about. Polling was rejected for the opposite reason: it would either waste requests on an empty inbox or introduce a visible lag, neither of which fits an app whose value is real-time presence.
+The main architectural friction was authentication. Every other QLink route authenticates via a Firebase JWT in the Authorization header, but the browser's EventSource API can't set headers, so the stream endpoint can't reuse that middleware directly. I resolved this by passing the token as a query parameter and verifying it with the same verifyIdToken() call the rest of the API uses — identical security guarantee, different transport. I'm aware of the tradeoff that tokens in URLs can surface in logs; at QLink's scale and threat model that's acceptable, but a production version would issue a short-lived single-use stream token instead.
+The server holds each live connection in an in-memory map keyed by user ID, with an array per user so multiple open tabs all receive the same event. Connections are deliberately never closed server-side — that open pipe is the mechanism — which introduces the usual liabilities of long-lived connections: memory per client, silent disconnects, and proxy timeouts. I mitigated these with a 30-second heartbeat to keep connections warm and a disconnect handler that evicts dead entries from the map so they don't leak. This is a conscious scale tradeoff: holding a connection per user is clearly fine for QLink, and the point at which it wouldn't be is well beyond this project.
+Finally, every notification is both persisted to Firestore and pushed live, using a single shared object shape. The live push drives the real-time badge, but a push reaches no one if the recipient is offline at that instant; persisting to Firestore gives the Alerts view a durable history so nothing is lost between sessions. Reusing one schema for both the stored record and the streamed payload means the client renders live and historical notifications through the same path.
+(Implementation note for the demo: nginx buffers proxied responses by default, which holds SSE messages rather than streaming them; buffering is disabled on the stream route so events arrive instantly on the deployed site.)
+
+The SSE connection is owned by a single Context provider rather than instantiated per-component, so each user holds exactly one open stream regardless of how many components display notifications — avoiding duplicate connections and the extra server-side memory and write cost they'd incur.

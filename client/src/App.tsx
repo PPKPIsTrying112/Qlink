@@ -6,6 +6,8 @@ import NavBar from './components/ui/NavBar'
 import FeedPage from './components/hangouts/FeedPage'
 import CreateHangout from './components/hangouts/CreateHangout'
 import ProfilePage from './components/profile/ProfilePage'
+import { NotificationsProvider } from './context/NotificationsContext'
+import NotificationsPanel from './components/notifications/NotificationPanel'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
@@ -23,38 +25,40 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/feed" element={
-            <ProtectedRoute>
-              <FeedPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/explore" element={
-            <ProtectedRoute>
-              <div className="p-4 text-white">Explore coming soon</div>
-            </ProtectedRoute>
-          } />
-          <Route path="/create" element={
-            <ProtectedRoute>
-              <CreateHangout />
-            </ProtectedRoute>
-          } />
-          <Route path="/notifications" element={
-            <ProtectedRoute>
-              <div className="p-4 text-white">Notifications coming soon</div>
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          } />
-          <Route path="/" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </BrowserRouter>
+      <NotificationsProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/feed" element={
+              <ProtectedRoute>
+                <FeedPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/explore" element={
+              <ProtectedRoute>
+                <div className="p-4 text-white">Explore coming soon</div>
+              </ProtectedRoute>
+            } />
+            <Route path="/create" element={
+              <ProtectedRoute>
+                <CreateHangout />
+              </ProtectedRoute>
+            } />
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <NotificationsPanel />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </NotificationsProvider>
     </AuthProvider>
   )
 }

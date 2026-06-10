@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useNotifications } from '../../context/NotificationsContext'
 
 const navItems = [
   { path: '/feed', label: 'Home', icon: '⊞' },
@@ -10,6 +11,17 @@ const navItems = [
 
 export default function NavBar() {
   const location = useLocation()
+  const { unreadCount } = useNotifications()
+
+  const Badge = () =>
+    unreadCount > 0 ? (
+      <span
+        className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center"
+        aria-label={`${unreadCount} unread notifications`}
+      >
+        {unreadCount > 9 ? '9+' : unreadCount}
+      </span>
+    ) : null
 
   return (
     <>
@@ -29,7 +41,10 @@ export default function NavBar() {
                   aria-label={item.label}
                   aria-current={active ? 'page' : undefined}
                 >
-                  <span className="text-xl" aria-hidden="true">{item.icon}</span>
+                  <span className="relative text-xl" aria-hidden="true">
+                    {item.icon}
+                    {item.path === '/notifications' && <Badge />}
+                  </span>
                   <span className="text-xs">{item.label}</span>
                 </Link>
               </li>
@@ -65,7 +80,10 @@ export default function NavBar() {
                   aria-label={item.label}
                   aria-current={active ? 'page' : undefined}
                 >
-                  <span className="text-lg" aria-hidden="true">{item.icon}</span>
+                  <span className="relative text-lg" aria-hidden="true">
+                    {item.icon}
+                    {item.path === '/notifications' && <Badge />}
+                  </span>
                   <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               </li>
