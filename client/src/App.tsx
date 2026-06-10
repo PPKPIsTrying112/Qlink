@@ -8,6 +8,7 @@ import CreateHangout from './components/hangouts/CreateHangout'
 import ProfilePage from './components/profile/ProfilePage'
 import { NotificationsProvider } from './context/NotificationsContext'
 import NotificationsPanel from './components/notifications/NotificationPanel'
+import HangoutDetail from './components/hangouts/HangoutDetail'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
@@ -53,6 +54,11 @@ function App() {
             <Route path="/profile" element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/hangouts/:id" element={
+              <ProtectedRoute>
+                <HangoutDetail />
               </ProtectedRoute>
             } />
             <Route path="/" element={<Navigate to="/login" replace />} />
