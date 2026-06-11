@@ -51,13 +51,13 @@ export default function FeedPage() {
     <main className="max-w-2xl mx-auto px-4 py-6">
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-white">Hangouts near you</h1>
-        <p className="text-gray-500 text-sm mt-1">Find your people, find your vibe</p>
+        <p className="text-gray-400 text-sm mt-1">Find your people, find your vibe</p>
       </header>
 
       {hangouts.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-gray-500">No hangouts yet.</p>
-          <p className="text-gray-600 text-sm mt-1">Be the first to create one.</p>
+          <p className="text-gray-400">No hangouts yet.</p>
+          <p className="text-gray-400 text-sm mt-1">Be the first to create one.</p>
         </div>
       ) : (
         <section className="space-y-4" aria-label="Hangout listings">
