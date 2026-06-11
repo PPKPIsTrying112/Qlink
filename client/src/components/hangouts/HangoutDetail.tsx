@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+import { enqueueJoinRequest } from '../../services/offlineQueue'
 
 interface Hangout {
   id: string
@@ -31,6 +32,7 @@ export default function HangoutDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [requested, setRequested] = useState(false)
+  const [queued, setQueued] = useState(false)
   const [working, setWorking] = useState(false)
 
   useEffect(() => {
@@ -50,13 +52,29 @@ export default function HangoutDetail() {
   const handleRequest = async () => {
     setWorking(true)
     setError('')
+
+    // Offline → queue it instead of failing, sync when back online.
+    if (!navigator.onLine) {
+      enqueueJoinRequest(id!)
+      setQueued(true)
+      setRequested(true)
+      setWorking(false)
+      return
+    }
+
     try {
       await api.post('/api/requests', { hangoutId: id })
       setRequested(true)
     } catch (err: any) {
-      // Backend returns 400 "Already requested to join" if duplicate
-      setError(err.response?.data?.error || 'Could not send request')
-      if (err.response?.data?.error?.includes('Already')) setRequested(true)
+      // No err.response = network died mid-request → queue it too
+      if (!err.response) {
+        enqueueJoinRequest(id!)
+        setQueued(true)
+        setRequested(true)
+      } else {
+        setError(err.response?.data?.error || 'Could not send request')
+        if (err.response?.data?.error?.includes('Already')) setRequested(true)
+      }
     } finally {
       setWorking(false)
     }
@@ -147,7 +165,13 @@ export default function HangoutDetail() {
             disabled={working || requested}
             className="w-full bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-black font-semibold py-3 rounded-xl text-sm transition-all"
           >
-            {requested ? 'Requested ✓' : working ? 'Sending...' : 'Request to join'}
+            {queued
+              ? 'Queued — will send when online ⏳'
+              : requested
+              ? 'Requested ✓'
+              : working
+              ? 'Sending...'
+              : 'Request to join'}
           </button>
         )}
       </article>

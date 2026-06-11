@@ -198,3 +198,20 @@ Finally, every notification is both persisted to Firestore and pushed live, usin
 (Implementation note for the demo: nginx buffers proxied responses by default, which holds SSE messages rather than streaming them; buffering is disabled on the stream route so events arrive instantly on the deployed site.)
 
 The SSE connection is owned by a single Context provider rather than instantiated per-component, so each user holds exactly one open stream regardless of how many components display notifications — avoiding duplicate connections and the extra server-side memory and write cost they'd incur.
+
+
+HangoutDetail page with host/guest split — same component shows "Request to join" (guest) or "Close hangout" (host), decided by user.uid === hostUid. Worth a line: one page, role-aware, rather than two separate components.
+Host post management — close uses the existing DELETE /api/hangouts/:id (sets status to cancelled), and the feed already filters status === 'active', so closed hangouts drop off automatically.
+SSE client = single Context provider (not per-component hooks) → one connection per user. You already have this paragraph drafted.
+
+
+For the "deployment challenges / debugging" section (the good stuff professors like):
+
+SSE CORS on the stream route — the cors() middleware didn't cover the streaming response because it sets its own headers and bypasses normal middleware flow; fixed by manually setting Access-Control-Allow-Origin (from CLIENT_URL) on the SSE response. Why it mattered: without it, EventSource rejected the connection and retried in a tight loop, hammering the server.
+The nginx correction — this is a great honest entry: "Initially assumed nginx buffering would block SSE in production, but inspecting the actual config showed nginx only serves static assets; the ingress routes /api directly to the server, so nginx isn't in the SSE path. The real production variable is the GCP load balancer's 30s backend timeout, addressed with a BackendConfig." That shows you debugged the actual architecture instead of assuming.
+
+
+For "known limitations / future work":
+
+Hosts can't edit hangouts yet (only close)
+No auto-archiving of past-dated hangouts — schema supports it via status, only the transition logic is unbuilt
