@@ -8,6 +8,7 @@ interface Notification {
   type: string
   hangoutId?: string
   hangoutTitle?: string
+  requestId?: string
   fromUid?: string
   read?: boolean
   createdAt?: any

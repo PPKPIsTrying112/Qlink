@@ -41,6 +41,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
         type: 'join_request',
         hangoutId,
         hangoutTitle,
+        requestId: doc.id,
         fromUid: req.user!.uid,
         read: false,
         createdAt: new Date()
