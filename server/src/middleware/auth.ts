@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { auth } from '../services/firebase'
+import { parseBearerToken } from '../lib/authHelpers'
 
 export interface AuthRequest extends Request {
   user?: {
@@ -13,14 +14,12 @@ export async function requireAuth(
   res: Response,
   next: NextFunction
 ) {
-  const authHeader = req.headers.authorization
+  const token = parseBearerToken(req.headers.authorization)
 
-  if (!authHeader?.startsWith('Bearer ')) {
+  if (!token) {
     res.status(401).json({ error: 'No token provided' })
     return
   }
-
-  const token = authHeader.split('Bearer ')[1]
 
   try {
     const decoded = await auth.verifyIdToken(token)

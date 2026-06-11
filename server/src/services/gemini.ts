@@ -1,3 +1,5 @@
+import { parseModerationResult } from '../lib/moderation'
+
 const GEMINI_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
 
@@ -25,10 +27,7 @@ Description: ${description}`
     const text: string =
       data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? 'SAFE'
 
-    if (text.toUpperCase().startsWith('UNSAFE')) {
-      return { safe: false, reason: text.replace(/^UNSAFE:?\s*/i, '') }
-    }
-    return { safe: true, reason: '' }
+    return parseModerationResult(text)
   } catch (err) {
     // Fail open: if Gemini is down, don't block the user (free tier can rate-limit)
     console.error('Gemini moderation error:', err)
