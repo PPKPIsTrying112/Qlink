@@ -4,9 +4,11 @@ metadata:
   name: qlink-ingress
   annotations:
     kubernetes.io/ingress.class: "gce"
+    networking.gke.io/managed-certificates: "qlink-cert"
 spec:
   rules:
-  - http:
+  - host: team16.cs144.org
+    http:
       paths:
       - path: /api
         pathType: Prefix

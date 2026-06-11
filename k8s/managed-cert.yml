@@ -1,0 +1,7 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: qlink-cert
+spec:
+  domains:
+    - team16.cs144.org

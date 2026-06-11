@@ -45,7 +45,7 @@ spec:
               name: server-secrets
               key: GEMINI_API_KEY
         - name: CLIENT_URL
-          value: "http://136.110.169.18"
+          value: "https://team16.cs144.org"
         - name: PORT
           value: "3001"
 ---
