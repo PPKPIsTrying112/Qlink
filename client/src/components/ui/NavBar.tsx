@@ -3,7 +3,6 @@ import { useNotifications } from '../../context/NotificationsContext'
 
 const navItems = [
   { path: '/feed', label: 'Home', icon: '⊞' },
-  { path: '/explore', label: 'Explore', icon: '◎' },
   { path: '/create', label: 'Create', icon: '＋' },
   { path: '/notifications', label: 'Alerts', icon: '◐' },
   { path: '/profile', label: 'Profile', icon: '◯' },
