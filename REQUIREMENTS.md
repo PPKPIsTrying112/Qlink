@@ -7,7 +7,7 @@ Semantic HTML5 elements are used throughout — `<nav>`, `<main>`, `<article>`, 
 
 **HTML5 APIs (2 required)**
 - **Geolocation API** — implemented in the CreateHangout component. When a user taps the Pin button, the browser requests their location and attaches the coordinates to the hangout post, so each hangout stores real `lat`/`lng` data in Firestore for distance filtering.
-- **Drag and Drop API** — implemented in ProfilePage, letting users reorder their profile photos by dragging; the new order is saved back to Firestore.
+- **Drag and Drop API** -  used in ProfilePage — drag an image file onto the drop zone to add a profile photo, and drag photos to reorder them. Photos preview in-session; persisting them to cloud storage (Firebase Storage) is noted as future work.
 
 **Responsive Design**
 The app is responsive at 320px (mobile), 768px (tablet), and 1024px (desktop) using Tailwind breakpoint utilities, verified at each width with no overflow or broken layout. Mobile uses a bottom navigation bar; desktop uses a left sidebar.

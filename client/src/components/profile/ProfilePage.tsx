@@ -26,7 +26,7 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
         const res = await api.get(`/api/users/${user?.uid}`)
-        setProfile(res.data)
+        setProfile({ photos: [], ...res.data })
       } catch {
         setEditing(true)
       } finally {
@@ -36,6 +36,23 @@ export default function ProfilePage() {
     if (user) fetchProfile()
   }, [user])
 
+  // Drag a photo FILE from the computer onto the drop zone to add it (HTML5 Drag and Drop)
+  const handleFileDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files?.[0]
+    if (!file || !file.type.startsWith('image/')) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      setProfile(prev => ({ ...prev, photos: [...prev.photos, dataUrl] }))
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const allowDrop = (e: React.DragEvent) => e.preventDefault()
+
+  // Drag existing photos to reorder them (HTML5 Drag and Drop)
   const handleDragStart = (index: number) => {
     setDragIndex(index)
   }
@@ -53,20 +70,18 @@ export default function ProfilePage() {
     setDragIndex(index)
   }
 
-  const handleDragEnd = async () => {
+  const handleDragEnd = () => {
     setDragIndex(null)
-    try {
-      await api.put(`/api/users/${user?.uid}`, { ...profile })
-    } catch {
-      console.error('Failed to save photo order')
-    }
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
     try {
-      await api.put(`/api/users/${user?.uid}`, profile)
+      // Save profile fields but not photos (preview-only in this version;
+      // a production version would upload photos to Firebase Storage and save the URLs)
+      const { photos, ...profileWithoutPhotos } = profile
+      await api.put(`/api/users/${user?.uid}`, profileWithoutPhotos)
       setEditing(false)
     } catch {
       console.error('Failed to save profile')
@@ -105,8 +120,8 @@ export default function ProfilePage() {
               </div>
               <div>
                 <h2 className="text-white font-semibold text-lg">{profile.name || 'No name yet'}</h2>
-                <p className="text-gray-500 text-sm">{user?.email}</p>
-                {profile.age > 0 && <p className="text-gray-500 text-sm">Age {profile.age}</p>}
+                <p className="text-gray-400 text-sm">{user?.email}</p>
+                {profile.age > 0 && <p className="text-gray-400 text-sm">Age {profile.age}</p>}
               </div>
             </div>
             {profile.bio && (
@@ -157,7 +172,7 @@ export default function ProfilePage() {
               type="text"
               value={profile.name}
               onChange={e => setProfile(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 placeholder:text-gray-600"
+              className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 placeholder:text-gray-500"
               placeholder="Your name"
               aria-required="true"
             />
@@ -187,10 +202,45 @@ export default function ProfilePage() {
               id="bio"
               value={profile.bio}
               onChange={e => setProfile(prev => ({ ...prev, bio: e.target.value }))}
-              className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 placeholder:text-gray-600 resize-none"
+              className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 placeholder:text-gray-500 resize-none"
               placeholder="Tell people about yourself..."
               rows={3}
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">
+              Photos
+            </label>
+            <div
+              onDrop={handleFileDrop}
+              onDragOver={allowDrop}
+              className="border-2 border-dashed border-white/15 rounded-xl p-6 text-center text-gray-400 text-sm hover:border-amber-400/40 transition-colors"
+              role="button"
+              aria-label="Drag and drop a photo here to add it"
+            >
+              Drag a photo here to add it
+            </div>
+
+            {profile.photos.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mt-3" aria-label="Your photos, drag to reorder">
+                {profile.photos.map((photo, index) => (
+                  <div
+                    key={index}
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragEnd={handleDragEnd}
+                    className={`aspect-square rounded-xl overflow-hidden cursor-grab active:cursor-grabbing border-2 transition-all ${
+                      dragIndex === index ? 'border-amber-400 opacity-50' : 'border-transparent'
+                    }`}
+                    aria-label={`Photo ${index + 1}, drag to reorder`}
+                  >
+                    <img src={photo} alt={`Profile photo ${index + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <button

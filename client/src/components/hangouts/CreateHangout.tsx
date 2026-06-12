@@ -27,16 +27,20 @@ export default function CreateHangout() {
   const getLocation = () => {
     setError('')
     if (!navigator.geolocation || !window.isSecureContext) {
-      setError('Location pin needs HTTPS — type your location manually for now')
+      setError('Location pin needs HTTPS - type your location manually for now')
       return
     }
     setLocating(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
         setForm(prev => ({
           ...prev,
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
+          lat,
+          lng,
+          // fill the visible location field if it's empty, so Pin clearly did something
+          location: prev.location || 'My current location',
         }))
         setLocating(false)
       },
@@ -64,7 +68,7 @@ export default function CreateHangout() {
     <main className="max-w-lg mx-auto px-4 py-6">
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-white">Create a hangout</h1>
-        <p className="text-gray-500 text-sm mt-1">Let people know what you are up to</p>
+        <p className="text-gray-400 text-sm mt-1">Let people know what you are up to</p>
       </header>
 
       {error && (
@@ -85,7 +89,7 @@ export default function CreateHangout() {
               type="text"
               value={form.title}
               onChange={handleChange}
-              className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 placeholder:text-gray-600"
+              className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 placeholder:text-gray-500"
               placeholder="What are you doing?"
               required
               aria-required="true"
@@ -120,7 +124,7 @@ export default function CreateHangout() {
                 type="text"
                 value={form.location}
                 onChange={handleChange}
-                className="flex-1 bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 placeholder:text-gray-600"
+                className="flex-1 bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 placeholder:text-gray-500"
                 placeholder="Where are you meeting?"
                 required
                 aria-required="true"
@@ -186,7 +190,7 @@ export default function CreateHangout() {
               value={form.description}
               onChange={handleChange}
               rows={4}
-              className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 placeholder:text-gray-600 resize-none"
+              className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 placeholder:text-gray-500 resize-none"
               placeholder="Tell people what to expect..."
               required
               aria-required="true"
