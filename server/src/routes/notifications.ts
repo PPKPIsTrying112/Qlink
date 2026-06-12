@@ -16,14 +16,13 @@ router.get('/stream', async (req, res) => {
 
   let uid: string
   try {
-    const decoded = await auth.verifyIdToken(token) // <-- the reused line
+    const decoded = await auth.verifyIdToken(token)
     uid = decoded.uid
   } catch {
     res.status(401).json({ error: 'Invalid or expired token' })
     return
   }
 
-  // SSE headers: tell the browser this is an event stream, keep it alive.
   res.setHeader('Content-Type', 'text/event-stream')
   res.setHeader('Cache-Control', 'no-cache')
   res.setHeader('Connection', 'keep-alive')
@@ -33,17 +32,15 @@ router.get('/stream', async (req, res) => {
   addClient(uid, res)
   res.write(`data: ${JSON.stringify({ type: 'connected' })}\n\n`)
 
-  // Heartbeat every 30s so the connection doesn't get killed as idle.
   const heartbeat = setInterval(() => res.write(': ping\n\n'), 30000)
 
-  // When the browser disconnects, clean up so we don't leak dead pipes.
   req.on('close', () => {
     clearInterval(heartbeat)
     removeClient(uid, res)
   })
 })
 
-// Normal endpoint: fetch past notifications for the Alerts page.
+// Fetch past notifications for the Alerts page.
 router.get('/', requireAuth, async (req: AuthRequest, res) => {
   try {
     const snapshot = await db.collection('notifications')
@@ -54,6 +51,23 @@ router.get('/', requireAuth, async (req: AuthRequest, res) => {
     res.json(notifications)
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch notifications' })
+  }
+})
+
+// Mark all of this user's notifications as read.
+router.put('/read', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const snapshot = await db.collection('notifications')
+      .where('uid', '==', req.user!.uid)
+      .get()
+
+    const batch = db.batch()
+    snapshot.docs.forEach(doc => batch.update(doc.ref, { read: true }))
+    await batch.commit()
+
+    res.json({ success: true })
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to mark notifications read' })
   }
 })
 

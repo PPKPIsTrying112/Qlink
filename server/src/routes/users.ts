@@ -23,11 +23,18 @@ router.put('/:uid', requireAuth, async (req: AuthRequest, res) => {
       res.status(403).json({ error: 'Not authorized' })
       return
     }
+
     const { name, bio, age, photos } = req.body
-    await db.collection('users').doc(req.params.uid).set(
-      { name, bio, age, photos, updatedAt: new Date() },
-      { merge: true }
-    )
+
+    // Only include fields that were actually sent (Firestore rejects undefined values)
+    const update: Record<string, any> = { updatedAt: new Date() }
+    if (name !== undefined) update.name = name
+    if (bio !== undefined) update.bio = bio
+    if (age !== undefined) update.age = age
+    if (photos !== undefined) update.photos = photos
+
+    await db.collection('users').doc(req.params.uid).set(update, { merge: true })
+
     res.json({ success: true })
   } catch (error) {
     res.status(500).json({ error: 'Failed to update user' })

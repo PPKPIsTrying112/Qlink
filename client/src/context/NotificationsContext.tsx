@@ -83,7 +83,15 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const markAllRead = () => setUnreadCount(0)
+  const markAllRead = async () => {
+    setUnreadCount(0) // update the badge instantly
+    try {
+      await api.put('/api/notifications/read') // persist so it stays read after refresh
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    } catch {
+      // if it fails, the badge will just reappear on refresh — not critical
+    }
+  }
 
   return (
     <NotificationsContext.Provider value={{ notifications, unreadCount, markAllRead }}>
