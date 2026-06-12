@@ -19,6 +19,7 @@ export default function ProfilePage() {
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [savedMsg, setSavedMsg] = useState(false)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [editing, setEditing] = useState(false)
 
@@ -83,6 +84,8 @@ export default function ProfilePage() {
       const { photos, ...profileWithoutPhotos } = profile
       await api.put(`/api/users/${user?.uid}`, profileWithoutPhotos)
       setEditing(false)
+      setSavedMsg(true)
+      setTimeout(() => setSavedMsg(false), 2500)
     } catch {
       console.error('Failed to save profile')
     } finally {
@@ -108,6 +111,12 @@ export default function ProfilePage() {
           {editing ? 'Cancel' : 'Edit'}
         </button>
       </header>
+
+      {savedMsg && (
+        <div role="status" className="bg-green-500/10 border border-green-500/20 text-green-400 p-3 rounded-xl mb-5 text-sm">
+          Profile saved
+        </div>
+      )}
 
       {!editing ? (
         <section aria-label="Profile details">
