@@ -1,5 +1,4 @@
 # QLink
-# Final Project by team16
 
 The name "QLink" comes from the clink of glasses where people end up sharing a drink as a friendly and close gesture. And the app is inspired by the idea of wanting to turn "alone in a city" into "let's grab something" by helping someone who's alone in a city find people to hang out with. A host posts a hangout (a coffee, a walk, a movie), other users browse a feed of hangouts near them, and they can request to join.
 
